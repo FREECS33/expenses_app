@@ -1,3 +1,5 @@
+import 'package:actividad_2/widgets/text_field_password.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class Login extends StatefulWidget {
@@ -10,7 +12,6 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _isObscure = true;
   final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
   String? validateEmail(String? value) {
     final RegExp emailRegExp = RegExp(
@@ -59,34 +60,29 @@ class _LoginState extends State<Login> {
                 const SizedBox(
                   height: 16,
                 ),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _isObscure,
-                  decoration: InputDecoration(
-                    hintText: "Contraseña",
-                    label: const Text("Contraseña"),
-                    suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _isObscure = !_isObscure;
-                          });
-                        },
-                        icon: Icon(_isObscure
-                            ? Icons.visibility
-                            : Icons.visibility_off)),
-                  ),
-                ),
+                TextFieldPassword(controller: _passwordController),
                 const SizedBox(
-                  height: 48,
+                  height: 16,
                 ),
                 SizedBox(
                   height: 48,
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formkey.currentState!.validate()) {
-                        print(
-                            "Datos => ${_emailController.text} ${_passwordController.text}");
+                        try {
+                          final credential = await FirebaseAuth.instance
+                              .signInWithEmailAndPassword(
+                                  email: _emailController.text,
+                                  password: _passwordController.text);
+                          Navigator.pushReplacementNamed(context, '/profile');
+                        } on FirebaseAuthException catch (e) {
+                          if (e.code == 'user-not-found') {
+                            print('No user found for that email.');
+                          } else if (e.code == 'wrong-password') {
+                            print('Wrong password provided for that user.');
+                          }
+                        }
                       }
                     },
                     style: OutlinedButton.styleFrom(
@@ -106,9 +102,16 @@ class _LoginState extends State<Login> {
                   },
                   child: const Text(
                     "Recuperar contraseña",
-                    style: TextStyle(
-                        color: Colors.blue,
-                        decoration: TextDecoration.underline),
+                    style: TextStyle(color: Colors.blue),
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/register');
+                  },
+                  child: const Text(
+                    "Registrarse",
+                    style: TextStyle(color: Colors.blue),
                   ),
                 )
               ],
